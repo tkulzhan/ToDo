@@ -63,7 +63,11 @@ func Register(c *gin.Context) {
 	project := database.Client.Database("project")
 	users := project.Collection("users")
 	_id := primitive.NewObjectID()
-	users.InsertOne(c, User{_id, username, password})
+	_, err := users.InsertOne(c, User{_id, username, password})
+	if err != nil {
+		c.Redirect(http.StatusSeeOther, "/register")
+		return
+	}
 	c.Redirect(http.StatusSeeOther, "/login")
 }
 
