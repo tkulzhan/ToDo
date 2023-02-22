@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"ToDo/database"
+	"fmt"
 	"math/rand"
 	"net/http"
 	"os"
@@ -11,21 +12,19 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/sessions"
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 	"golang.org/x/crypto/bcrypt"
 )
 
 type User struct {
-	Username string `bson:"username,omitempty"`
-	Password string `bson:"password,omitempty"`
+	Id       primitive.ObjectID `bson:"_id,omitempty"`
+	Username string             `bson:"username,omitempty"`
+	Password string             `bson:"password,omitempty"`
 }
 
-var store = sessions.NewCookieStore([]byte(os.Getenv(randomString(15))))
-var isAuth bool = false
-
-func IsAuth() bool {
-	return isAuth
-}
+var Store = sessions.NewCookieStore([]byte(os.Getenv(randomString(15))))
+var user User
 
 func Login(c *gin.Context) {
 	username := c.PostForm("username")
@@ -36,24 +35,26 @@ func Login(c *gin.Context) {
 	err := users.FindOne(c, filter).Decode(&result)
 	if err != nil {
 		if err == mongo.ErrNoDocuments {
-			c.Redirect(http.StatusFound, "/login")
+			c.Redirect(http.StatusSeeOther, "/login")
+			fmt.Fprint(c.Writer, "err")
 			return
 		}
 		panic(err)
 	}
 	if !CheckPasswordHash(password, result.Password) {
-		c.Redirect(http.StatusFound, "/login")
+		c.Redirect(http.StatusSeeOther, "/login")
+		fmt.Fprint(c.Writer, "err")
 		return
 	}
-	session, _ := store.Get(c.Request, "user")
+	user = result
+	session, _ := Store.Get(c.Request, "user")
 	session.Values["id"] = username
 	err = session.Save(c.Request, c.Writer)
-	isAuth = true
 	if err != nil {
 		ErrorHandler(c.Writer, c.Request, 500)
 		return
 	}
-	c.Redirect(http.StatusFound, "/todo")
+	c.Redirect(http.StatusSeeOther, "/todo")
 }
 
 func Register(c *gin.Context) {
@@ -61,16 +62,16 @@ func Register(c *gin.Context) {
 	password, _ := HashPassword(c.PostForm("password"))
 	project := database.Client.Database("project")
 	users := project.Collection("users")
-	users.InsertOne(c, User{username, password})
-	c.Redirect(http.StatusFound, "/login")
+	_id := primitive.NewObjectID()
+	users.InsertOne(c, User{_id, username, password})
+	c.Redirect(http.StatusSeeOther, "/login")
 }
 
 func Logout(c *gin.Context) {
-	session, _ := store.Get(c.Request, "user")
+	session, _ := Store.Get(c.Request, "user")
 	session.Options.MaxAge = -1
 	session.Save(c.Request, c.Writer)
-	isAuth = false
-	c.Redirect(http.StatusOK, "/")
+	c.Redirect(http.StatusSeeOther, "/")
 }
 
 func HashPassword(password string) (string, error) {
@@ -93,4 +94,8 @@ func randomString(n int) string {
 		sb.WriteByte(charset[rand.Intn(len(charset))])
 	}
 	return sb.String()
+}
+
+func GetUser() User {
+	return user
 }

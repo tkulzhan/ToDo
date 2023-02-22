@@ -44,11 +44,29 @@ func RegistrationPage(c *gin.Context) {
 }
 
 func ToDoPage(c *gin.Context) {
-	if !IsAuth() {
-		c.Redirect(http.StatusNonAuthoritativeInfo, "/login")
+	session, _ := Store.Get(c.Request, "user")
+	if session.Values["id"] != GetUser().Username {
+		c.Redirect(http.StatusSeeOther, "/login")
 		return
 	}
 	tmpl, err := template.ParseFiles("./templates/todo.html")
+	if err != nil {
+		ErrorHandler(c.Writer, c.Request, http.StatusInternalServerError)
+		return
+	}
+	if err := tmpl.Execute(c.Writer, GetToDoList(c)); err != nil {
+		ErrorHandler(c.Writer, c.Request, http.StatusInternalServerError)
+		return
+	}
+}
+
+func AddToDoPage(c *gin.Context) {
+	session, _ := Store.Get(c.Request, "user")
+	if session.Values["id"] != GetUser().Username {
+		c.Redirect(http.StatusSeeOther, "/login")
+		return
+	}
+	tmpl, err := template.ParseFiles("./templates/addtodo.html")
 	if err != nil {
 		ErrorHandler(c.Writer, c.Request, http.StatusInternalServerError)
 		return
