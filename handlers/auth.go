@@ -2,8 +2,11 @@ package handlers
 
 import (
 	"ToDo/database"
+	"math/rand"
 	"net/http"
 	"os"
+	"strings"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/sessions"
@@ -17,7 +20,12 @@ type User struct {
 	Password string `bson:"password,omitempty"`
 }
 
-var store = sessions.NewCookieStore([]byte(os.Getenv("SECRET_KEY")))
+var store = sessions.NewCookieStore([]byte(os.Getenv(randomString(15))))
+var isAuth bool = false
+
+func IsAuth() bool {
+	return isAuth
+}
 
 func Login(c *gin.Context) {
 	username := c.PostForm("username")
@@ -28,16 +36,19 @@ func Login(c *gin.Context) {
 	err := users.FindOne(c, filter).Decode(&result)
 	if err != nil {
 		if err == mongo.ErrNoDocuments {
+			c.Redirect(http.StatusFound, "/login")
 			return
 		}
 		panic(err)
 	}
 	if !CheckPasswordHash(password, result.Password) {
+		c.Redirect(http.StatusFound, "/login")
 		return
 	}
 	session, _ := store.Get(c.Request, "user")
 	session.Values["id"] = username
 	err = session.Save(c.Request, c.Writer)
+	isAuth = true
 	if err != nil {
 		ErrorHandler(c.Writer, c.Request, 500)
 		return
@@ -58,6 +69,7 @@ func Logout(c *gin.Context) {
 	session, _ := store.Get(c.Request, "user")
 	session.Options.MaxAge = -1
 	session.Save(c.Request, c.Writer)
+	isAuth = false
 	c.Redirect(http.StatusOK, "/")
 }
 
@@ -69,4 +81,16 @@ func HashPassword(password string) (string, error) {
 func CheckPasswordHash(password, hash string) bool {
 	err := bcrypt.CompareHashAndPassword([]byte(hash), []byte(password))
 	return err == nil
+}
+
+const charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ123456789!@#$%^&*()"
+
+func randomString(n int) string {
+	rand.Seed(time.Now().UnixNano())
+	sb := strings.Builder{}
+	sb.Grow(n)
+	for i := 0; i < n; i++ {
+		sb.WriteByte(charset[rand.Intn(len(charset))])
+	}
+	return sb.String()
 }

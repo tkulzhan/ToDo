@@ -44,6 +44,10 @@ func RegistrationPage(c *gin.Context) {
 }
 
 func ToDoPage(c *gin.Context) {
+	if !IsAuth() {
+		c.Redirect(http.StatusNonAuthoritativeInfo, "/login")
+		return
+	}
 	tmpl, err := template.ParseFiles("./templates/todo.html")
 	if err != nil {
 		ErrorHandler(c.Writer, c.Request, http.StatusInternalServerError)
