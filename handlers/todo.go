@@ -10,6 +10,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.mongodb.org/mongo-driver/mongo"
 )
 
 type ToDo struct {
@@ -108,6 +109,21 @@ func DeleteToDo(c *gin.Context) {
 	filter := bson.D{{Key: "_id", Value: _id}}
 	todos.DeleteOne(c, filter)
 	c.Redirect(http.StatusSeeOther, "/todo")
+}
+
+func Seacrh(c *gin.Context) []ToDo {
+	keyword := c.Query("search")
+	todos := database.Client.Database("project").Collection("todos")
+	matchStage := bson.D{{Key: "$match", Value: bson.D{{Key: "$text", Value: bson.D{{Key: "$search", Value: keyword}}}}}}
+	cursor, err := todos.Aggregate(c, mongo.Pipeline{matchStage})
+	if err != nil {
+		panic(err)
+	}
+	var results []ToDo
+	if err = cursor.All(c, &results); err != nil {
+		panic(err)
+	}
+	return results
 }
 
 func getMonth(n int) time.Month {

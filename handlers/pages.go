@@ -53,7 +53,13 @@ func ToDoPage(c *gin.Context) {
 		ErrorHandler(c.Writer, c.Request, http.StatusInternalServerError)
 		return
 	}
-	if err := tmpl.Execute(c.Writer, GetToDoList(c)); err != nil {
+	var todos []ToDo
+	if c.Query("search") == "" {
+		todos = GetToDoList(c)
+	} else {
+		todos = Seacrh(c)
+	}
+	if err := tmpl.Execute(c.Writer, todos); err != nil {
 		ErrorHandler(c.Writer, c.Request, http.StatusInternalServerError)
 		return
 	}
