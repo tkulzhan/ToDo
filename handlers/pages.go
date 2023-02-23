@@ -1,12 +1,10 @@
 package handlers
 
 import (
-	"ToDo/database"
 	"html/template"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"go.mongodb.org/mongo-driver/bson"
 )
 
 func HomePage(c *gin.Context) {
@@ -87,11 +85,7 @@ func EditPage(c *gin.Context) {
 		ErrorHandler(c.Writer, c.Request, http.StatusInternalServerError)
 		return
 	}
-	todos := database.Client.Database("project").Collection("todos")
-	_id := c.Param("id")
-	filter := bson.D{{Key: "_id", Value: _id}}
-	var todo ToDo
-	todos.FindOne(c, filter).Decode(&todo)
+	todo := GetOne(c)
 	if err := tmpl.Execute(c.Writer, todo); err != nil {
 		ErrorHandler(c.Writer, c.Request, http.StatusInternalServerError)
 		return
@@ -108,11 +102,7 @@ func ReadPage(c *gin.Context) {
 		ErrorHandler(c.Writer, c.Request, http.StatusInternalServerError)
 		return
 	}
-	todos := database.Client.Database("project").Collection("todos")
-	_id := c.Param("id")
-	filter := bson.D{{Key: "_id", Value: _id}}
-	var todo ToDo
-	todos.FindOne(c, filter).Decode(&todo)
+	todo := GetOne(c)
 	if err := tmpl.Execute(c.Writer, todo); err != nil {
 		ErrorHandler(c.Writer, c.Request, http.StatusInternalServerError)
 		return

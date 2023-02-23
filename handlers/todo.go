@@ -4,6 +4,7 @@ import (
 	"ToDo/database"
 	"net/http"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -47,13 +48,15 @@ func AddToDo(c *gin.Context) {
 	title := c.PostForm("title")
 	category := c.PostForm("category")
 	text := c.PostForm("text")
-	year, _ := strconv.Atoi(c.PostForm("year"))
-	month, _ := strconv.Atoi(c.PostForm("month"))
-	day, _ := strconv.Atoi(c.PostForm("day"))
-	hour, _ := strconv.Atoi(c.PostForm("hour"))
-	minute, _ := strconv.Atoi(c.PostForm("minute"))
+	date := strings.FieldsFunc(c.PostForm("due"), split)
+	year, _ := strconv.Atoi(date[0])
+	month, _ := strconv.Atoi(date[1])
+	day, _ := strconv.Atoi(date[2])
+	hour, _ := strconv.Atoi(date[3])
+	minute, _ := strconv.Atoi(date[4])
 	loc := time.Now().Location()
-	due := time.Date(year, getMonth(month), day, hour, minute, 0, 0, loc).Format(time.RFC822)
+	due := time.Date(year, getMonth(month), day, hour, minute, 0, 0, loc).Format(time.RFC3339)
+	due = due[:16]
 	_id := primitive.NewObjectID().Hex()
 	todos.InsertOne(c, ToDo{_id, title, category, text, due, "Not complete", GetUser().Id})
 	c.Redirect(http.StatusSeeOther, "/todo")
@@ -61,18 +64,20 @@ func AddToDo(c *gin.Context) {
 
 func EditToDo(c *gin.Context) {
 	todos := database.Client.Database("project").Collection("todos")
-	_id, _ := primitive.ObjectIDFromHex(c.Param("id"))
+	_id := c.Param("id")
 	title := c.PostForm("title")
 	category := c.PostForm("category")
 	text := c.PostForm("text")
-	year, _ := strconv.Atoi(c.PostForm("year"))
-	month, _ := strconv.Atoi(c.PostForm("month"))
-	day, _ := strconv.Atoi(c.PostForm("day"))
-	hour, _ := strconv.Atoi(c.PostForm("hour"))
-	minute, _ := strconv.Atoi(c.PostForm("minute"))
+	date := strings.FieldsFunc(c.PostForm("due"), split)
+	year, _ := strconv.Atoi(date[0])
+	month, _ := strconv.Atoi(date[1])
+	day, _ := strconv.Atoi(date[2])
+	hour, _ := strconv.Atoi(date[3])
+	minute, _ := strconv.Atoi(date[4])
 	state := c.PostForm("state")
 	loc := time.Now().Location()
-	due := time.Date(year, getMonth(month), day, hour, minute, 0, 0, loc)
+	due := time.Date(year, getMonth(month), day, hour, minute, 0, 0, loc).Format(time.RFC3339)
+	due = due[:16]
 	filter := bson.D{{Key: "_id", Value: _id}}
 	update := bson.D{
 		{Key: "$set", Value: bson.D{{Key: "title", Value: title}}},
@@ -86,6 +91,15 @@ func EditToDo(c *gin.Context) {
 		panic(err)
 	}
 	c.Redirect(http.StatusSeeOther, "/todo")
+}
+
+func GetOne(c *gin.Context) ToDo {
+	todos := database.Client.Database("project").Collection("todos")
+	_id := c.Param("id")
+	filter := bson.D{{Key: "_id", Value: _id}}
+	var todo ToDo
+	todos.FindOne(c, filter).Decode(&todo)
+	return todo
 }
 
 func DeleteToDo(c *gin.Context) {
@@ -122,4 +136,8 @@ func getMonth(n int) time.Month {
 		return time.November
 	}
 	return time.December
+}
+
+func split(r rune) bool {
+	return r == ':' || r == '-' || r == 'T'
 }

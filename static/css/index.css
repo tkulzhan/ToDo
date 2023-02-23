@@ -1,3 +1,8 @@
+* {
+    padding: 0;
+    margin: 0;
+}
+
 body {
     background-color: #025041;
     color: white;
@@ -58,5 +63,36 @@ body {
 }
 
 .card-body {
-    width: 342px;
+    min-width: 342px;
+}
+
+.add-btn {
+    position: fixed;
+    bottom: 0%;
+    right: 0%;
+    margin-bottom: 25px;
+    margin-right: 25px;
+    color: white;
+}
+
+.logout-btn {
+    position: fixed;
+    bottom: 0%;
+    left: 0%;
+    margin-bottom: 25px;
+    margin-left: 25px;
+    color: white;
+}
+
+i {
+    color: white;
+    font-size: 75px;
+}
+
+i:hover {
+    color: #949494;
+}
+
+label {
+    font-size: 24px;
 }

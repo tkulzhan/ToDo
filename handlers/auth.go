@@ -18,9 +18,16 @@ import (
 )
 
 type User struct {
-	Id       primitive.ObjectID `bson:"_id,omitempty"`
-	Username string             `bson:"username,omitempty"`
-	Password string             `bson:"password,omitempty"`
+	Id        primitive.ObjectID `bson:"_id,omitempty"`
+	Username  string             `bson:"username,omitempty"`
+	Password  string             `bson:"password,omitempty"`
+	TimeStamp timestamp          `bson:"timestamp,omitempty"`
+}
+
+type timestamp struct {
+	Start   time.Time `bson:"start,omitempty"`
+	Last    time.Time `bson:"last,omitempty"`
+	VisitsN int       `bson:"visits_n,omitempty"`
 }
 
 var Store = sessions.NewCookieStore([]byte(os.Getenv(randomString(15))))
@@ -54,6 +61,7 @@ func Login(c *gin.Context) {
 		ErrorHandler(c.Writer, c.Request, 500)
 		return
 	}
+	updateTimeStamp(c, users)
 	c.Redirect(http.StatusSeeOther, "/todo")
 }
 
@@ -63,7 +71,7 @@ func Register(c *gin.Context) {
 	project := database.Client.Database("project")
 	users := project.Collection("users")
 	_id := primitive.NewObjectID()
-	_, err := users.InsertOne(c, User{_id, username, password})
+	_, err := users.InsertOne(c, User{_id, username, password, timestamp{time.Now(), time.Now(), 0}})
 	if err != nil {
 		c.Redirect(http.StatusSeeOther, "/register")
 		return
@@ -107,4 +115,13 @@ func GetUser() User {
 func isAuth(c *gin.Context) bool {
 	session, _ := Store.Get(c.Request, "user")
 	return session.Values["id"] == GetUser().Username
+}
+
+func updateTimeStamp(c *gin.Context, users *mongo.Collection) {
+	filter := bson.D{{Key: "_id", Value: GetUser().Id}}
+	update := bson.D{
+		{Key: "$set", Value: bson.D{{Key: "timestamp.last", Value: time.Now()}}},
+		{Key: "$set", Value: bson.D{{Key: "timestamp.visits_n", Value: GetUser().TimeStamp.VisitsN + 1}}},
+	}
+	users.UpdateOne(c, filter, update)
 }
