@@ -17,13 +17,37 @@
     <nav class="navbar bg-dark">
         <div class="container">
             <a class="navbar-brand d-flex" href="/todo">
-                <img src="../static/img/logo.png" alt="Logo" width="75px"
-                    class="d-inline-block align-text-top">
+                <img src="../static/img/logo.png" alt="Logo" width="75px" class="d-inline-block align-text-top">
                 <text style="color:white; font-size: 50px; margin-left: 10px;">ToDo</text>
             </a>
             <div class="d-flex">
+                <form action="/sort" class="d-flex" style="margin-right: 10px;">
+                    <div style="flex-direction: column; margin-right: 10px;">
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="sortType" value="asc">
+                            <label style="font-size: 16px;" class="form-check-label" for="flexRadioDefault1">
+                                Ascending
+                            </label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="sortType" value="desc" checked>
+                            <label style="font-size: 16px;" class="form-check-label" for="flexRadioDefault2">
+                                Descending
+                            </label>
+                        </div>
+                    </div>
+                    <select class="form-select" name="sort">
+                        <option selected>Sorting</option>
+                        <option value="category">Category</option>
+                        <option value="title">Title</option>
+                        <option value="state">State</option>
+                        <option value="due">Due</option>
+                        <option value="text">Text</option>
+                    </select>
+                    <button class="btn btn-outline-success">Sort</button>
+                </form>
                 <form class="d-flex" action="/search" method="get">
-                    <input class="form-control me-2" placeholder="Search" name="search">
+                    <input class="form-control" placeholder="Search" name="search">
                     <button class="btn btn-outline-success" type="submit">Search</button>
                 </form>
             </div>

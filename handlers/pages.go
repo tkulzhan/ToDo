@@ -57,8 +57,14 @@ func ToDoPage(c *gin.Context) {
 	if c.Query("search") != "" {
 		todos = Seacrh(c)
 	} else if c.Query("sort") != "" {
-		todos = Sort(c)
-	} else {
+		k := c.Query("sort")
+		t := c.Query("sortType")
+		v := 1
+		if t == "desc" {
+			v = -1
+		}
+		todos = Sort(c, v, k)
+	}else {
 		todos = GetToDoList(c)
 	}
 	if err := tmpl.Execute(c.Writer, todos); err != nil {

@@ -127,11 +127,10 @@ func Seacrh(c *gin.Context) []ToDo {
 	return results
 }
 
-func Sort(c *gin.Context) []ToDo {
-	keyword := c.Query("sort")
+func Sort(c *gin.Context, v int, keyword string) []ToDo {
 	todos := database.Client.Database("project").Collection("todos")
 	filter := bson.D{}
-	opts := options.Find().SetSort(bson.D{{Key: keyword, Value: 1}})
+	opts := options.Find().SetSort(bson.D{{Key: keyword, Value: v}})
 	cursor, err := todos.Find(c, filter, opts)
 	var results []ToDo
 	if err = cursor.All(c, &results); err != nil {
