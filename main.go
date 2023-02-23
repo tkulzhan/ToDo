@@ -31,5 +31,6 @@ func main() {
 	router.GET("/admin/search", handlers.AdminPage)
 	router.GET("/admin/sort", handlers.AdminPage)
 	router.GET("/admin", handlers.AdminPage)
+	router.GET("admin/delete/:user", handlers.DeleteUser)
 	router.Run("localhost:3000")
 }

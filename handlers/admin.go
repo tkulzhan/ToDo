@@ -46,12 +46,20 @@ func SortUsers(c *gin.Context, v int, keyword string) []User {
 	users := database.Client.Database("project").Collection("users")
 	filter := bson.D{}
 	opts := options.Find().SetSort(bson.D{{Key: keyword, Value: v}})
-	cursor, err := users.Find(c, filter, opts)
+	cursor, _ := users.Find(c, filter, opts)
 	var results []User
-	if err = cursor.All(c, &results); err != nil {
+	if err := cursor.All(c, &results); err != nil {
 		panic(err)
 	}
 	return results
+}
+
+func DeleteUser(c *gin.Context) {
+	users := database.Client.Database("project").Collection("users")
+	user := c.Param("user")
+	filter := bson.D{{Key: "username", Value: user}}
+	users.DeleteOne(c, filter)
+	c.Redirect(http.StatusSeeOther, "/admin")
 }
 
 func AdminPage(c *gin.Context) {

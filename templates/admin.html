@@ -48,6 +48,9 @@
                     <p class="card-text"><b>Last visit: </b>{{.TimeStamp.Last}}</p>
                     <p class="card-text"><b>Visits Number:</b> {{.TimeStamp.VisitsN}}</p>
                 </div>
+                <div class="card-footer">
+                    <a href="/admin/delete/{{.Username}}" class="btn btn-danger" style="width: 80px;">Delete</a>
+                </div>
             </div>
             {{end}}
         </div>
