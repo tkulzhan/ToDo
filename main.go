@@ -27,5 +27,9 @@ func main() {
 	// Seacrh, Group, Sort
 	router.GET("/search", handlers.ToDoPage)
 	router.GET("/sort", handlers.ToDoPage)
+	// Admin
+	router.GET("/admin/search", handlers.AdminPage)
+	router.GET("/admin/sort", handlers.AdminPage)
+	router.GET("/admin", handlers.AdminPage)
 	router.Run("localhost:3000")
 }

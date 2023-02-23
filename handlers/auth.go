@@ -22,6 +22,7 @@ type User struct {
 	Username  string             `bson:"username,omitempty"`
 	Password  string             `bson:"password,omitempty"`
 	TimeStamp timestamp          `bson:"timestamp,omitempty"`
+	Role      string             `bson:"role,omitempty"`
 }
 
 type timestamp struct {
@@ -62,6 +63,10 @@ func Login(c *gin.Context) {
 		return
 	}
 	updateTimeStamp(c, users)
+	if user.Role == "admin" {
+		c.Redirect(http.StatusSeeOther, "/admin")
+		return
+	}
 	c.Redirect(http.StatusSeeOther, "/todo")
 }
 
@@ -71,7 +76,7 @@ func Register(c *gin.Context) {
 	project := database.Client.Database("project")
 	users := project.Collection("users")
 	_id := primitive.NewObjectID()
-	_, err := users.InsertOne(c, User{_id, username, password, timestamp{time.Now(), time.Now(), 0}})
+	_, err := users.InsertOne(c, User{_id, username, password, timestamp{time.Now(), time.Now(), 0}, "user"})
 	if err != nil {
 		c.Redirect(http.StatusSeeOther, "/register")
 		return
