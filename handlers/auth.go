@@ -88,7 +88,7 @@ func CheckPasswordHash(password, hash string) bool {
 	return err == nil
 }
 
-const charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ123456789!@#$%^&*()"
+const charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ123456789"
 
 func randomString(n int) string {
 	rand.Seed(time.Now().UnixNano())
@@ -102,4 +102,9 @@ func randomString(n int) string {
 
 func GetUser() User {
 	return user
+}
+
+func isAuth(c *gin.Context) bool {
+	session, _ := Store.Get(c.Request, "user")
+	return session.Values["id"] == GetUser().Username
 }

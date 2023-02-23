@@ -12,11 +12,11 @@ import (
 )
 
 type ToDo struct {
-	Id       primitive.ObjectID `bson:"_id,omitempty"`
+	Id       string             `bson:"_id,omitempty"`
 	Title    string             `bson:"title,omitempty"`
 	Category string             `bson:"category,omitempty"`
 	Text     string             `bson:"text,omitempty"`
-	Due      time.Time          `bson:"due"`
+	Due      string             `bson:"due"`
 	State    string             `bson:"state,omitempty"`
 	Author   primitive.ObjectID `bson:"author,omitempty"`
 }
@@ -34,6 +34,11 @@ func GetToDoList(c *gin.Context) []ToDo {
 		}
 		results = append(results, result)
 	}
+	for i := 0; i < len(results); i++ {
+		if len(results[i].Text) > 100 {
+			results[i].Text = results[i].Text[:100] + "..."
+		}
+	}
 	return results
 }
 
@@ -48,9 +53,46 @@ func AddToDo(c *gin.Context) {
 	hour, _ := strconv.Atoi(c.PostForm("hour"))
 	minute, _ := strconv.Atoi(c.PostForm("minute"))
 	loc := time.Now().Location()
-	due := time.Date(year, getMonth(month), day, hour, minute, 0, 0, loc)
-	_id := primitive.NewObjectID()
+	due := time.Date(year, getMonth(month), day, hour, minute, 0, 0, loc).Format(time.RFC822)
+	_id := primitive.NewObjectID().Hex()
 	todos.InsertOne(c, ToDo{_id, title, category, text, due, "Not complete", GetUser().Id})
+	c.Redirect(http.StatusSeeOther, "/todo")
+}
+
+func EditToDo(c *gin.Context) {
+	todos := database.Client.Database("project").Collection("todos")
+	_id, _ := primitive.ObjectIDFromHex(c.Param("id"))
+	title := c.PostForm("title")
+	category := c.PostForm("category")
+	text := c.PostForm("text")
+	year, _ := strconv.Atoi(c.PostForm("year"))
+	month, _ := strconv.Atoi(c.PostForm("month"))
+	day, _ := strconv.Atoi(c.PostForm("day"))
+	hour, _ := strconv.Atoi(c.PostForm("hour"))
+	minute, _ := strconv.Atoi(c.PostForm("minute"))
+	state := c.PostForm("state")
+	loc := time.Now().Location()
+	due := time.Date(year, getMonth(month), day, hour, minute, 0, 0, loc)
+	filter := bson.D{{Key: "_id", Value: _id}}
+	update := bson.D{
+		{Key: "$set", Value: bson.D{{Key: "title", Value: title}}},
+		{Key: "$set", Value: bson.D{{Key: "category", Value: category}}},
+		{Key: "$set", Value: bson.D{{Key: "text", Value: text}}},
+		{Key: "$set", Value: bson.D{{Key: "due", Value: due}}},
+		{Key: "$set", Value: bson.D{{Key: "state", Value: state}}},
+	}
+	_, err := todos.UpdateOne(c, filter, update)
+	if err != nil {
+		panic(err)
+	}
+	c.Redirect(http.StatusSeeOther, "/todo")
+}
+
+func DeleteToDo(c *gin.Context) {
+	todos := database.Client.Database("project").Collection("todos")
+	_id := c.Param("id")
+	filter := bson.D{{Key: "_id", Value: _id}}
+	todos.DeleteOne(c, filter)
 	c.Redirect(http.StatusSeeOther, "/todo")
 }
 

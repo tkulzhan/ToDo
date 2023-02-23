@@ -14,9 +14,43 @@
 </head>
 
 <body>
-    {{range .}}
-    <h1>{{.Title}}</h1>
-    {{end}}
+    <nav class="navbar bg-dark">
+        <div class="container">
+            <a class="navbar-brand d-flex" href="/todo">
+                <img src="../static/img/logo.png" alt="Logo" width="75px"
+                    class="d-inline-block align-text-top">
+                <text style="color:white; font-size: 50px; margin-left: 10px;">ToDo</text>
+            </a>
+            <div class="d-flex">
+                <form class="d-flex" role="search" action="/serach" method="get">
+                    <input class="form-control me-2" placeholder="Search" name="search">
+                    <button class="btn btn-outline-success" type="submit">Search</button>
+                </form>
+            </div>
+        </div>
+    </nav>
+    <div class="container">
+        <div class="row">
+            {{range .}}
+            <div class="card" style="width: 400px; height: 250px; margin: 20px 20px;">
+                <div class="card-header d-flex justify-content-between" style="color: black; padding-top: 16px;">
+                    <h5 class="card-title">{{.Title}}</h5>
+                    <h5 class="card-title">{{.State}}</h5>
+                </div>
+                <div class="card-body" style="color: black; min-width: 340px">
+                    <h6 class="card-subtitle mb-2 text-muted">Category: {{.Category}}</h6>
+                    <h6 class="card-subtitle mb-2 text-muted">Due: {{.Due}}</h6>
+                    <p class="card-text">{{.Text}}</p>
+                </div>
+                <div class="card-footer">
+                    <a href="/edit/{{.Id}}" class="btn btn-warning" style="width: 80px;">Update</a>
+                    <a href="/delete/{{.Id}}" class="btn btn-danger" style="width: 80px;">Delete</a>
+                    <a href="/read/{{.Id}}" class="btn btn-success" style="width: 80px;">Read</a>
+                </div>
+            </div>
+            {{end}}
+        </div>
+    </div>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js"
         integrity="sha384-kenU1KFdBIe4zVF0s0G1M5b4hcpxyD9F7jL+jjXkk+Q2h455rYXK/7HAuoJl+0I4"
         crossorigin="anonymous"></script>

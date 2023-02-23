@@ -1,10 +1,12 @@
 package handlers
 
 import (
+	"ToDo/database"
 	"html/template"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"go.mongodb.org/mongo-driver/bson"
 )
 
 func HomePage(c *gin.Context) {
@@ -44,8 +46,7 @@ func RegistrationPage(c *gin.Context) {
 }
 
 func ToDoPage(c *gin.Context) {
-	session, _ := Store.Get(c.Request, "user")
-	if session.Values["id"] != GetUser().Username {
+	if !isAuth(c) {
 		c.Redirect(http.StatusSeeOther, "/login")
 		return
 	}
@@ -61,8 +62,7 @@ func ToDoPage(c *gin.Context) {
 }
 
 func AddToDoPage(c *gin.Context) {
-	session, _ := Store.Get(c.Request, "user")
-	if session.Values["id"] != GetUser().Username {
+	if !isAuth(c) {
 		c.Redirect(http.StatusSeeOther, "/login")
 		return
 	}
@@ -72,6 +72,48 @@ func AddToDoPage(c *gin.Context) {
 		return
 	}
 	if err := tmpl.Execute(c.Writer, ""); err != nil {
+		ErrorHandler(c.Writer, c.Request, http.StatusInternalServerError)
+		return
+	}
+}
+
+func EditPage(c *gin.Context) {
+	if !isAuth(c) {
+		c.Redirect(http.StatusSeeOther, "/login")
+		return
+	}
+	tmpl, err := template.ParseFiles("./templates/edittodo.html")
+	if err != nil {
+		ErrorHandler(c.Writer, c.Request, http.StatusInternalServerError)
+		return
+	}
+	todos := database.Client.Database("project").Collection("todos")
+	_id := c.Param("id")
+	filter := bson.D{{Key: "_id", Value: _id}}
+	var todo ToDo
+	todos.FindOne(c, filter).Decode(&todo)
+	if err := tmpl.Execute(c.Writer, todo); err != nil {
+		ErrorHandler(c.Writer, c.Request, http.StatusInternalServerError)
+		return
+	}
+}
+
+func ReadPage(c *gin.Context) {
+	if !isAuth(c) {
+		c.Redirect(http.StatusSeeOther, "/login")
+		return
+	}
+	tmpl, err := template.ParseFiles("./templates/readtodo.html")
+	if err != nil {
+		ErrorHandler(c.Writer, c.Request, http.StatusInternalServerError)
+		return
+	}
+	todos := database.Client.Database("project").Collection("todos")
+	_id := c.Param("id")
+	filter := bson.D{{Key: "_id", Value: _id}}
+	var todo ToDo
+	todos.FindOne(c, filter).Decode(&todo)
+	if err := tmpl.Execute(c.Writer, todo); err != nil {
 		ErrorHandler(c.Writer, c.Request, http.StatusInternalServerError)
 		return
 	}
