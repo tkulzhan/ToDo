@@ -54,10 +54,12 @@ func ToDoPage(c *gin.Context) {
 		return
 	}
 	var todos []ToDo
-	if c.Query("search") == "" {
-		todos = GetToDoList(c)
-	} else {
+	if c.Query("search") != "" {
 		todos = Seacrh(c)
+	} else if c.Query("sort") != "" {
+		todos = Sort(c)
+	} else {
+		todos = GetToDoList(c)
 	}
 	if err := tmpl.Execute(c.Writer, todos); err != nil {
 		ErrorHandler(c.Writer, c.Request, http.StatusInternalServerError)

@@ -26,5 +26,6 @@ func main() {
 	router.POST("/edit/:id", handlers.EditToDo)
 	// Seacrh, Group, Sort
 	router.GET("/search", handlers.ToDoPage)
+	router.GET("/sort", handlers.ToDoPage)
 	router.Run("localhost:3000")
 }
