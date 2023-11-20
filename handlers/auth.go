@@ -43,13 +43,16 @@ func Login(c *gin.Context) {
 	err := users.FindOne(c, filter).Decode(&result)
 	if err != nil {
 		if err == mongo.ErrNoDocuments {
+			ErrorHandler(c.Writer, c.Request, 400)
 			c.Redirect(http.StatusSeeOther, "/login")
 			fmt.Fprint(c.Writer, "err")
 			return
 		}
+		ErrorHandler(c.Writer, c.Request, 500)
 		panic(err)
 	}
 	if !CheckPasswordHash(password, result.Password) {
+		ErrorHandler(c.Writer, c.Request, 400)
 		c.Redirect(http.StatusSeeOther, "/login")
 		fmt.Fprint(c.Writer, "err")
 		return
@@ -72,12 +75,18 @@ func Login(c *gin.Context) {
 
 func Register(c *gin.Context) {
 	username := c.PostForm("username")
-	password, _ := HashPassword(c.PostForm("password"))
+	password, err := HashPassword(c.PostForm("password"))
+	if err != nil {
+		ErrorHandler(c.Writer, c.Request, 500)
+		c.Redirect(http.StatusSeeOther, "/register")
+		return
+	}
 	project := database.Client.Database("project")
 	users := project.Collection("users")
 	_id := primitive.NewObjectID()
-	_, err := users.InsertOne(c, User{_id, username, password, timestamp{time.Now(), time.Now(), 0}, "user"})
+	_, err = users.InsertOne(c, User{_id, username, password, timestamp{time.Now(), time.Now(), 0}, "user"})
 	if err != nil {
+		ErrorHandler(c.Writer, c.Request, 400)
 		c.Redirect(http.StatusSeeOther, "/register")
 		return
 	}
@@ -87,7 +96,10 @@ func Register(c *gin.Context) {
 func Logout(c *gin.Context) {
 	session, _ := Store.Get(c.Request, "user")
 	session.Options.MaxAge = -1
-	session.Save(c.Request, c.Writer)
+	err := session.Save(c.Request, c.Writer)
+	if err != nil {
+		ErrorHandler(c.Writer, c.Request, 500)
+	}
 	c.Redirect(http.StatusSeeOther, "/")
 }
 
@@ -128,5 +140,8 @@ func updateTimeStamp(c *gin.Context, users *mongo.Collection) {
 		{Key: "$set", Value: bson.D{{Key: "timestamp.last", Value: time.Now()}}},
 		{Key: "$set", Value: bson.D{{Key: "timestamp.visits_n", Value: GetUser().TimeStamp.VisitsN + 1}}},
 	}
-	users.UpdateOne(c, filter, update)
+	_, err := users.UpdateOne(c, filter, update)
+	if err != nil {
+		ErrorHandler(c.Writer, c.Request, 500)
+	}
 }

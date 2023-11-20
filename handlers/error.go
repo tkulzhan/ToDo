@@ -3,10 +3,15 @@ package handlers
 import (
 	"fmt"
 	"net/http"
+	"github.com/prometheus/client_golang/prometheus"
 )
 
 func ErrorHandler(w http.ResponseWriter, r *http.Request, status int) {
 	w.WriteHeader(status)
+
+	// Increment error count in prometheus metric
+	HttpRequestErrors.WithLabelValues("ERROR").Inc()
+
 	if status == http.StatusNotFound {
 		fmt.Fprint(w, "404 page not found")
 	} else if status == http.StatusBadRequest {
@@ -17,3 +22,12 @@ func ErrorHandler(w http.ResponseWriter, r *http.Request, status int) {
 		fmt.Fprint(w, "405 method not allowed")
 	}
 }
+
+// HttpRequestErrors is the prometheus counter metric
+var HttpRequestErrors = prometheus.NewCounterVec(
+	prometheus.CounterOpts{
+		Name: "x_http_request_errors_total",
+		Help: "Total number of HTTP requests resulting in errors",
+	},
+	[]string{"type"},
+)

@@ -14,13 +14,18 @@ import (
 func getUsers(c *gin.Context) []User {
 	users := database.Client.Database("project").Collection("users")
 	filter := bson.D{}
-	cursor, _ := users.Find(c, filter)
+	cursor, err := users.Find(c, filter)
+	if err != nil {
+		ErrorHandler(c.Writer, c.Request, http.StatusInternalServerError)
+		return nil
+	}
+	defer cursor.Close(c)
 	var results []User
 	for cursor.Next(c) {
 		var result User
-		err := cursor.Decode(&result)
-		if err != nil {
-			panic(err)
+		if err := cursor.Decode(&result); err != nil {
+			ErrorHandler(c.Writer, c.Request, http.StatusInternalServerError)
+			return nil
 		}
 		results = append(results, result)
 	}
@@ -33,11 +38,14 @@ func SeacrhUsers(c *gin.Context) []User {
 	matchStage := bson.D{{Key: "$match", Value: bson.D{{Key: "$text", Value: bson.D{{Key: "$search", Value: "\"" + keyword + "\""}}}}}}
 	cursor, err := users.Aggregate(c, mongo.Pipeline{matchStage})
 	if err != nil {
-		panic(err)
+		ErrorHandler(c.Writer, c.Request, http.StatusInternalServerError)
+		return nil
 	}
+	defer cursor.Close(c)
 	var results []User
 	if err = cursor.All(c, &results); err != nil {
-		panic(err)
+		ErrorHandler(c.Writer, c.Request, http.StatusInternalServerError)
+		return nil
 	}
 	return results
 }
@@ -46,10 +54,16 @@ func SortUsers(c *gin.Context, v int, keyword string) []User {
 	users := database.Client.Database("project").Collection("users")
 	filter := bson.D{}
 	opts := options.Find().SetSort(bson.D{{Key: keyword, Value: v}})
-	cursor, _ := users.Find(c, filter, opts)
+	cursor, err := users.Find(c, filter, opts)
+	if err != nil {
+		ErrorHandler(c.Writer, c.Request, http.StatusInternalServerError)
+		return nil
+	}
+	defer cursor.Close(c)
 	var results []User
 	if err := cursor.All(c, &results); err != nil {
-		panic(err)
+		ErrorHandler(c.Writer, c.Request, http.StatusInternalServerError)
+		return nil
 	}
 	return results
 }
@@ -58,7 +72,11 @@ func DeleteUser(c *gin.Context) {
 	users := database.Client.Database("project").Collection("users")
 	user := c.Param("user")
 	filter := bson.D{{Key: "username", Value: user}}
-	users.DeleteOne(c, filter)
+	_, err := users.DeleteOne(c, filter)
+	if err != nil {
+		ErrorHandler(c.Writer, c.Request, http.StatusInternalServerError)
+		return
+	}
 	c.Redirect(http.StatusSeeOther, "/admin")
 }
 
@@ -82,7 +100,7 @@ func AdminPage(c *gin.Context) {
 			v = -1
 		}
 		users = SortUsers(c, v, "username")
-	}else {
+	} else {
 		users = getUsers(c)
 	}
 	if err := tmpl.Execute(c.Writer, users); err != nil {
