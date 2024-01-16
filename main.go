@@ -9,6 +9,7 @@ import (
 func main() {
 	// Setup Gin router
 	router := gin.Default()
+	router.Static("/static", "./static/")
 	router.GET("/", handlers.HomePage)
 	// Authentication and Authorization
 	router.GET("/logout", handlers.Logout)
