@@ -2,13 +2,16 @@ package handlers
 
 import (
 	"fmt"
+	"log"
 	"net/http"
+	"strconv"
+
 	"github.com/prometheus/client_golang/prometheus"
 )
 
-func ErrorHandler(w http.ResponseWriter, r *http.Request, status int) {
+func ErrorHandler(w http.ResponseWriter, r *http.Request, status int, err error) {
 	w.WriteHeader(status)
-
+	log.Println("ERROR status: " + strconv.Itoa(status))
 	// Increment error count in prometheus metric
 	HttpRequestErrors.WithLabelValues("ERROR").Inc()
 

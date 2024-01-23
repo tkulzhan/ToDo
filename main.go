@@ -2,9 +2,19 @@ package main
 
 import (
 	"ToDo/handlers"
+	"log"
+	"os"
 
 	"github.com/gin-gonic/gin"
+	"github.com/joho/godotenv"
 )
+
+func init() {
+	err := godotenv.Load("app.env")
+	if err != nil {
+		log.Println("Error loading app.env: ", err)
+	}
+}
 
 func main() {
 	// Setup Gin router
@@ -33,5 +43,14 @@ func main() {
 	router.GET("/admin/sort", handlers.AdminPage)
 	router.GET("/admin", handlers.AdminPage)
 	router.GET("admin/delete/:user", handlers.DeleteUser)
-	router.Run("localhost:3000")
+	port := GetEnv("PORT", "3000")
+	router.Run(":" + port)
+}
+
+func GetEnv(key, fallback string) string {
+	if value, ok := os.LookupEnv(key); ok {
+		return value
+	}
+	log.Println("Could not find " + key + " in env. Returning fallback")
+	return fallback
 }

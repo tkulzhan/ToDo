@@ -29,16 +29,14 @@ func GetToDoList(c *gin.Context) []ToDo {
 	filter := bson.D{{Key: "author", Value: GetUser().Id}}
 	cursor, err := todos.Find(c, filter)
 	if err != nil {
-		ErrorHandler(c.Writer, c.Request, http.StatusInternalServerError)
-		panic(err)
+		ErrorHandler(c.Writer, c.Request, http.StatusInternalServerError, err)
 	}
 	var results []ToDo
 	for cursor.Next(c) {
 		var result ToDo
 		err := cursor.Decode(&result)
 		if err != nil {
-			ErrorHandler(c.Writer, c.Request, http.StatusInternalServerError)
-			panic(err)
+			ErrorHandler(c.Writer, c.Request, http.StatusInternalServerError, err)
 		}
 		results = append(results, result)
 	}
@@ -67,7 +65,7 @@ func AddToDo(c *gin.Context) {
 	_id := primitive.NewObjectID().Hex()
 	_, err := todos.InsertOne(c, ToDo{_id, title, category, text, due, "Not complete", GetUser().Id})
 	if err != nil {
-		ErrorHandler(c.Writer, c.Request, http.StatusInternalServerError)
+		ErrorHandler(c.Writer, c.Request, http.StatusInternalServerError, err)
 		c.Redirect(http.StatusSeeOther, "/todo")
 		return
 	}
@@ -100,7 +98,7 @@ func EditToDo(c *gin.Context) {
 	}
 	_, err := todos.UpdateOne(c, filter, update)
 	if err != nil {
-		ErrorHandler(c.Writer, c.Request, http.StatusInternalServerError)
+		ErrorHandler(c.Writer, c.Request, http.StatusInternalServerError, err)
 		c.Redirect(http.StatusSeeOther, "/todo")
 		return
 	}
@@ -114,8 +112,7 @@ func GetOne(c *gin.Context) ToDo {
 	var todo ToDo
 	err := todos.FindOne(c, filter).Decode(&todo)
 	if err != nil {
-		ErrorHandler(c.Writer, c.Request, http.StatusInternalServerError)
-		panic(err)
+		ErrorHandler(c.Writer, c.Request, http.StatusInternalServerError, err)
 	}
 	return todo
 }
@@ -126,7 +123,7 @@ func DeleteToDo(c *gin.Context) {
 	filter := bson.D{{Key: "_id", Value: _id}}
 	_, err := todos.DeleteOne(c, filter)
 	if err != nil {
-		ErrorHandler(c.Writer, c.Request, http.StatusInternalServerError)
+		ErrorHandler(c.Writer, c.Request, http.StatusInternalServerError, err)
 	}
 	c.Redirect(http.StatusSeeOther, "/todo")
 }
@@ -137,13 +134,11 @@ func Seacrh(c *gin.Context) []ToDo {
 	matchStage := bson.D{{Key: "$match", Value: bson.D{{Key: "$text", Value: bson.D{{Key: "$search", Value: "\"" + keyword + "\""}}}}}}
 	cursor, err := todos.Aggregate(c, mongo.Pipeline{matchStage})
 	if err != nil {
-		ErrorHandler(c.Writer, c.Request, http.StatusInternalServerError)
-		panic(err)
+		ErrorHandler(c.Writer, c.Request, http.StatusInternalServerError, err)
 	}
 	var results []ToDo
 	if err = cursor.All(c, &results); err != nil {
-		ErrorHandler(c.Writer, c.Request, http.StatusInternalServerError)
-		panic(err)
+		ErrorHandler(c.Writer, c.Request, http.StatusInternalServerError, err)
 	}
 	return results
 }
@@ -154,13 +149,11 @@ func Sort(c *gin.Context, v int, keyword string) []ToDo {
 	opts := options.Find().SetSort(bson.D{{Key: keyword, Value: v}})
 	cursor, err := todos.Find(c, filter, opts)
 	if err != nil {
-		ErrorHandler(c.Writer, c.Request, http.StatusInternalServerError)
-		panic(err)
+		ErrorHandler(c.Writer, c.Request, http.StatusInternalServerError, err)
 	}
 	var results []ToDo
 	if err = cursor.All(c, &results); err != nil {
-		ErrorHandler(c.Writer, c.Request, http.StatusInternalServerError)
-		panic(err)
+		ErrorHandler(c.Writer, c.Request, http.StatusInternalServerError, err)
 	}
 	return results
 }

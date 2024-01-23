@@ -43,16 +43,15 @@ func Login(c *gin.Context) {
 	err := users.FindOne(c, filter).Decode(&result)
 	if err != nil {
 		if err == mongo.ErrNoDocuments {
-			ErrorHandler(c.Writer, c.Request, 400)
+			ErrorHandler(c.Writer, c.Request, 400, err)
 			c.Redirect(http.StatusSeeOther, "/login")
 			fmt.Fprint(c.Writer, "err")
 			return
 		}
-		ErrorHandler(c.Writer, c.Request, 500)
-		panic(err)
+		ErrorHandler(c.Writer, c.Request, 500, err)
 	}
 	if !CheckPasswordHash(password, result.Password) {
-		ErrorHandler(c.Writer, c.Request, 400)
+		ErrorHandler(c.Writer, c.Request, 400, err)
 		c.Redirect(http.StatusSeeOther, "/login")
 		fmt.Fprint(c.Writer, "err")
 		return
@@ -62,7 +61,7 @@ func Login(c *gin.Context) {
 	session.Values["id"] = username
 	err = session.Save(c.Request, c.Writer)
 	if err != nil {
-		ErrorHandler(c.Writer, c.Request, 500)
+		ErrorHandler(c.Writer, c.Request, 500, err)
 		return
 	}
 	updateTimeStamp(c, users)
@@ -77,7 +76,7 @@ func Register(c *gin.Context) {
 	username := c.PostForm("username")
 	password, err := HashPassword(c.PostForm("password"))
 	if err != nil {
-		ErrorHandler(c.Writer, c.Request, 500)
+		ErrorHandler(c.Writer, c.Request, 500, err)
 		c.Redirect(http.StatusSeeOther, "/register")
 		return
 	}
@@ -86,7 +85,7 @@ func Register(c *gin.Context) {
 	_id := primitive.NewObjectID()
 	_, err = users.InsertOne(c, User{_id, username, password, timestamp{time.Now(), time.Now(), 0}, "user"})
 	if err != nil {
-		ErrorHandler(c.Writer, c.Request, 400)
+		ErrorHandler(c.Writer, c.Request, 400, err)
 		c.Redirect(http.StatusSeeOther, "/register")
 		return
 	}
@@ -98,7 +97,7 @@ func Logout(c *gin.Context) {
 	session.Options.MaxAge = -1
 	err := session.Save(c.Request, c.Writer)
 	if err != nil {
-		ErrorHandler(c.Writer, c.Request, 500)
+		ErrorHandler(c.Writer, c.Request, 500, err)
 	}
 	c.Redirect(http.StatusSeeOther, "/")
 }
@@ -142,6 +141,6 @@ func updateTimeStamp(c *gin.Context, users *mongo.Collection) {
 	}
 	_, err := users.UpdateOne(c, filter, update)
 	if err != nil {
-		ErrorHandler(c.Writer, c.Request, 500)
+		ErrorHandler(c.Writer, c.Request, 500, err)
 	}
 }

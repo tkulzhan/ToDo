@@ -16,7 +16,7 @@ func getUsers(c *gin.Context) []User {
 	filter := bson.D{}
 	cursor, err := users.Find(c, filter)
 	if err != nil {
-		ErrorHandler(c.Writer, c.Request, http.StatusInternalServerError)
+		ErrorHandler(c.Writer, c.Request, http.StatusInternalServerError, err)
 		return nil
 	}
 	defer cursor.Close(c)
@@ -24,7 +24,7 @@ func getUsers(c *gin.Context) []User {
 	for cursor.Next(c) {
 		var result User
 		if err := cursor.Decode(&result); err != nil {
-			ErrorHandler(c.Writer, c.Request, http.StatusInternalServerError)
+			ErrorHandler(c.Writer, c.Request, http.StatusInternalServerError, err)
 			return nil
 		}
 		results = append(results, result)
@@ -38,13 +38,13 @@ func SeacrhUsers(c *gin.Context) []User {
 	matchStage := bson.D{{Key: "$match", Value: bson.D{{Key: "$text", Value: bson.D{{Key: "$search", Value: "\"" + keyword + "\""}}}}}}
 	cursor, err := users.Aggregate(c, mongo.Pipeline{matchStage})
 	if err != nil {
-		ErrorHandler(c.Writer, c.Request, http.StatusInternalServerError)
+		ErrorHandler(c.Writer, c.Request, http.StatusInternalServerError, err)
 		return nil
 	}
 	defer cursor.Close(c)
 	var results []User
 	if err = cursor.All(c, &results); err != nil {
-		ErrorHandler(c.Writer, c.Request, http.StatusInternalServerError)
+		ErrorHandler(c.Writer, c.Request, http.StatusInternalServerError, err)
 		return nil
 	}
 	return results
@@ -56,13 +56,13 @@ func SortUsers(c *gin.Context, v int, keyword string) []User {
 	opts := options.Find().SetSort(bson.D{{Key: keyword, Value: v}})
 	cursor, err := users.Find(c, filter, opts)
 	if err != nil {
-		ErrorHandler(c.Writer, c.Request, http.StatusInternalServerError)
+		ErrorHandler(c.Writer, c.Request, http.StatusInternalServerError, err)
 		return nil
 	}
 	defer cursor.Close(c)
 	var results []User
 	if err := cursor.All(c, &results); err != nil {
-		ErrorHandler(c.Writer, c.Request, http.StatusInternalServerError)
+		ErrorHandler(c.Writer, c.Request, http.StatusInternalServerError, err)
 		return nil
 	}
 	return results
@@ -74,7 +74,7 @@ func DeleteUser(c *gin.Context) {
 	filter := bson.D{{Key: "username", Value: user}}
 	_, err := users.DeleteOne(c, filter)
 	if err != nil {
-		ErrorHandler(c.Writer, c.Request, http.StatusInternalServerError)
+		ErrorHandler(c.Writer, c.Request, http.StatusInternalServerError, err)
 		return
 	}
 	c.Redirect(http.StatusSeeOther, "/admin")
@@ -87,7 +87,7 @@ func AdminPage(c *gin.Context) {
 	}
 	tmpl, err := template.ParseFiles("./templates/admin.html")
 	if err != nil {
-		ErrorHandler(c.Writer, c.Request, http.StatusInternalServerError)
+		ErrorHandler(c.Writer, c.Request, http.StatusInternalServerError, err)
 		return
 	}
 	var users []User
@@ -104,7 +104,7 @@ func AdminPage(c *gin.Context) {
 		users = getUsers(c)
 	}
 	if err := tmpl.Execute(c.Writer, users); err != nil {
-		ErrorHandler(c.Writer, c.Request, http.StatusInternalServerError)
+		ErrorHandler(c.Writer, c.Request, http.StatusInternalServerError, err)
 		return
 	}
 }
