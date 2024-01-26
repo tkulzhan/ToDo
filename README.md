@@ -7,6 +7,7 @@
 <li>Either clone the repo or download archive</li>
 <li>Go to the project folder</li>
 <li>In terminal type <b><em>go run .</em></b> or <b><em>go run main.go</em></b></li>
+<li>Or build docker image <b><em>docker build -t [name]:[tag] .</em></b> and then run it <b><em>docker run -p [port]:[port] [name]:[tag]</em></b></li>
 <li>And proceed to the app by clicking <a href="http://localhost:3000">here</a></li>
 <br>
 <h1>Technologies</h1>
