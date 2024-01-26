@@ -7,6 +7,7 @@ import (
 	"os"
 	"time"
 
+	"github.com/joho/godotenv"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
@@ -26,6 +27,10 @@ func mongoClient() *mongo.Client {
 }
 
 func GetEnv(key, fallback string) string {
+	err := godotenv.Load("./app.env")
+	if err != nil {
+		log.Println("Error loading app.env: ", err)
+	}
 	if value, ok := os.LookupEnv(key); ok {
 		return value
 	}
