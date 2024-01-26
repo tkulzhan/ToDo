@@ -19,6 +19,7 @@ func init() {
 func main() {
 	// Setup Gin router
 	router := gin.Default()
+	gin.SetMode(GetEnv("GIN_MODE", "release"))
 	router.Static("/static", "./static/")
 	router.GET("/", handlers.HomePage)
 	// Authentication and Authorization
