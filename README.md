@@ -14,6 +14,7 @@
 <h3>The server side of the website was written in GO programing language, its frameworks and packages (Gin, Gorilla etc.).</h3>
 <h3>As DBMS MongoDB was used. The project uses MongoDB Atlas to store data in the cloud.</h3>
 <h3>The client side of the website was written in HTML, CSS (BootStrap).</h3>
+<br>
 
 # ✅ API Documentation
 ## 🔐 Authentication & Authorization
