@@ -15,7 +15,7 @@
 <h3>As DBMS MongoDB was used. The project uses MongoDB Atlas to store data in the cloud.</h3>
 <h3>The client side of the website was written in HTML, CSS (BootStrap).</h3>
 
-### ✅ API Documentation
+# ✅ API Documentation
 ## 🔐 Authentication & Authorization
 
 | Method | Path        | Handler           | Description                           | Access Level  |
